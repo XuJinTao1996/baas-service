@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"rds-front/pkg/setting"
-	"rds-front/routers"
+	"baas-service/pkg/setting"
+	"baas-service/routers"
 )
 
 func main() {

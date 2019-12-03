@@ -1,9 +1,9 @@
 package routers
 
 import (
+	v1 "baas-service/pkg/controllers/v1"
+	"baas-service/pkg/setting"
 	"github.com/gin-gonic/gin"
-	v1 "rds-front/pkg/controllers/v1"
-	"rds-front/pkg/setting"
 )
 
 func InitRouter() *gin.Engine {
@@ -19,13 +19,13 @@ func InitRouter() *gin.Engine {
 	{
 
 		// 获取 mysql 实例列表
-		apiv1.GET("/mysql", v1.GetMysqlInstances)
+		apiv1.GET("/mysql", v1.GetMysqlClusters)
 		// 新建 mysql 实例
-		apiv1.POST("/mysql", v1.CreateMysqlInstance)
+		apiv1.POST("/mysql", v1.CreateMysqlCluster)
 		// 更新指定 mysql 实例
-		apiv1.PUT("/mysql/:id", v1.UpdateMysqlInstance)
+		apiv1.PUT("/mysql/:id", v1.UpdateMysqlCluster)
 		// 删除指定 mysql 实例
-		apiv1.DELETE("/mysql/:id", v1.DeleteMysqlInstance)
+		apiv1.DELETE("/mysql/:id", v1.DeleteMysqlCluster)
 
 	}
 

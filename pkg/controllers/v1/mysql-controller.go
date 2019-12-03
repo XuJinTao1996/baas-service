@@ -1,45 +1,21 @@
 package v1
 
 import (
+	"baas-service/models"
+	"baas-service/pkg/e"
+	"baas-service/pkg/sync_status"
+	"baas-service/pkg/util"
 	"github.com/gin-gonic/gin"
-	mysqlv1alpha1 "github.com/oracle/mysql-operator/pkg/apis/mysql/v1alpha1"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"rds-front/pkg/k8s_client"
-
-	"k8s.io/client-go/rest"
+	"github.com/prometheus/common/log"
 	"net/http"
-	//"rds-front/models"
-	"rds-front/pkg/e"
-	//"rds-front/pkg/util"
 )
 
-func load_k8s_config() *k8s_client.ClusterClient {
-	var config *rest.Config
-	config, _ = rest.InClusterConfig()
-	client_set, err := k8s_client.NewForConfig(config)
-	if err != nil {
-		panic(err)
-	}
-	return client_set
-}
-
-func K8s_get_mysqlcluster() *mysqlv1alpha1.ClusterList {
-	client_set := load_k8s_config()
-	mysqlcluster, err := client_set.Clusters("mysql-operator").List(metav1.ListOptions{})
-	if err != nil {
-		panic(err)
-	}
-	return mysqlcluster
-}
-
-// 获取所有 mysql 实例
-func GetMysqlInstances(c *gin.Context) {
+// 获取所有 mysql 集群
+func GetMysqlClusters(c *gin.Context) {
 
 	data := make(map[string]interface{})
 
-	//data["list"], data["total"] = models.GetAllMysqlInstance()
-	data["list"] = K8s_get_mysqlcluster()
+	data["list"], data["total"] = models.GetAllMysqlClusters()
 
 	c.JSON(http.StatusOK, gin.H{
 		"code": e.SUCCESS,
@@ -48,71 +24,72 @@ func GetMysqlInstances(c *gin.Context) {
 	})
 }
 
-func CreateMysqlInstance(c *gin.Context) {
-	name := c.PostForm("db_instance_name")
+// 创建 mysql 集群
+func CreateMysqlCluster(c *gin.Context) {
+
 	data := make(map[string]interface{})
-	client_set := load_k8s_config()
-	//var pvc_mode []corev1.PersistentVolumeAccessMode{corev1.ReadWriteMany,}
-	//sc_name := "alicloud-nas"
-	newCluster := mysqlv1alpha1.Cluster{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Cluster",
-			APIVersion: "mysql.oracle.com/v1alpha1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
-		},
-		Spec: mysqlv1alpha1.ClusterSpec{
-			Version: "8.0.12",
-			//VolumeClaimTemplate: &corev1.PersistentVolumeClaim{
-			//	ObjectMeta: metav1.ObjectMeta{
-			//		Name: "test-mysql",
-			//	},
-			//	Spec: corev1.PersistentVolumeClaimSpec{
-			//		AccessModes: pvc_mode,
-			//		Resources: corev1.ResourceRequirements{
-			//			Requests: corev1.ResourceList{corev1.ResourceStorage}.StorageEphemeral(),
-			//		},
-			//		StorageClassName: &sc_name,
-			//	},
-			//},
-			RootPasswordSecret: &corev1.LocalObjectReference{
-				Name: "wordpress-mysql-root-password",
-			},
-			Config: &corev1.LocalObjectReference{
-				Name: "mysql-config",
-			},
-		},
-	}
-	result, err := client_set.Clusters("mysql-operator").Create(&newCluster)
-	if err != nil {
-		panic(err)
+
+	namespace := c.PostForm("namespace")
+	clusterName := c.PostForm("clusterName")
+	member := util.Str(c.PostForm("member")).Int()
+	user := c.PostForm("user")
+	password := c.PostForm("password")
+	port := util.Str(c.PostForm("port")).Int()
+	multiMaster := util.Str(c.PostForm("multiMaster")).Bool()
+	version := c.PostForm("version")
+	storageType := c.PostForm("storageType")
+	volumeSize := util.Str(c.PostForm("volumeSize")).Int()
+
+	mysqlCluster := models.MysqlCluster{
+		Namespace:   namespace,
+		ClusterName: clusterName,
+		Member:      member,
+		User:        user,
+		Passwd:      password,
+		Port:        port,
+		MultiMaster: multiMaster,
+		Version:     version,
+		StorageType: storageType,
+		VolumeSize:  volumeSize,
+		ServiceUrl:  clusterName + "-router",
 	}
 
-	//db_user := c.PostForm("db_user")
-	//db_passwd := c.PostForm("db_passwd")
-	//db_port := util.Str(c.PostForm("db_port")).Int()
-	//deployment_mode := c.PostForm("deployment_mode")
-	//code := e.INVALID_PARAMS
-	//if !models.ExistMysqlInstance(name) {
-	//	models.AddTag(name, db_user, db_passwd, db_port, deployment_mode)
 	code := e.CREATED
-	//} else {
-	//	code = e.ERROR_ESIST_MYSQL
-	//}
-	data["data"] = result
+
+	isExisted := models.ExistMysqlCluster(clusterName)
+	if isExisted {
+		log.Infof("cluster %v existed!", clusterName)
+		code = e.ERROR_ESIST_MYSQL
+	} else {
+		cStatus := models.AddMysqlCluster(&mysqlCluster)
+		if !cStatus {
+			code = e.ERROR_CREATE_MYSQL
+			log.Error("Failed to create mysql cluster!")
+		} else {
+			result, err := sync_status.K8sCreateMysqlCluster(&mysqlCluster)
+			if err != nil {
+				log.Error("Failed to create mysqlcluster %v", mysqlCluster.ClusterName)
+				code = e.ERROR_CREATE_MYSQL
+			} else {
+				data["result"] = result
+				log.Infof("cluster %v created", clusterName)
+				code = e.CREATED
+			}
+		}
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"code": code,
 		"msg":  e.GetMsg(code),
 		"data": data,
 	})
-}
-
-func UpdateMysqlInstance(c *gin.Context) {
 
 }
 
-func DeleteMysqlInstance(c *gin.Context) {
+func UpdateMysqlCluster(c *gin.Context) {
+
+}
+
+func DeleteMysqlCluster(c *gin.Context) {
 
 }

@@ -1,0 +1,54 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dbaas
+  namespace: mysql-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dbaas
+  template:
+    metadata:
+      labels:
+        app: dbaas
+    spec:
+      containers:
+        - name: dbaas-controller
+          image: 'dbaas:v1.0'
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: dbaas
+  name: dbaas
+  namespace: mysql-operator
+spec:
+  ports:
+    - port: 8080
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    app: dbaas
+  type: ClusterIP
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  labels:
+    app: dbaas
+  name: dbaas
+  namespace: mysql-operator
+spec:
+  host: dbaas.caas-aio-apps.trystack.cn
+  to:
+    kind: Service
+    name: dbaas
+    weight: 100
+  wildcardPolicy: None
