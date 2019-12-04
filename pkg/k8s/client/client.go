@@ -1,4 +1,4 @@
-package k8s_client
+package client
 
 import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -7,7 +7,7 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-type ClientBaseInterface interface {
+type BaseClientInterface interface {
 	Clusters(namespace string) ClusterInterface
 }
 
@@ -37,7 +37,7 @@ func (c *ClusterClient) Clusters(namespace string) ClusterInterface {
 	}
 }
 
-func Load_K8s_Config() *rest.Config {
+func LoadK8sConfig() *rest.Config {
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		panic(err)

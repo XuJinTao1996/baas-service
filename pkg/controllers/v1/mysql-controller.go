@@ -3,8 +3,8 @@ package v1
 import (
 	"baas-service/models"
 	"baas-service/pkg/e"
-	"baas-service/pkg/sync_status"
-	"baas-service/pkg/util"
+	"baas-service/pkg/sync"
+	"baas-service/pkg/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/common/log"
 	"net/http"
@@ -26,39 +26,18 @@ func GetMysqlClusters(c *gin.Context) {
 
 // 创建 mysql 集群
 func CreateMysqlCluster(c *gin.Context) {
+	var mysqlCluster models.MysqlCluster
 
-	data := make(map[string]interface{})
-
-	namespace := c.PostForm("namespace")
-	clusterName := c.PostForm("clusterName")
-	member := util.Str(c.PostForm("member")).Int()
-	user := c.PostForm("user")
-	password := c.PostForm("password")
-	port := util.Str(c.PostForm("port")).Int()
-	multiMaster := util.Str(c.PostForm("multiMaster")).Bool()
-	version := c.PostForm("version")
-	storageType := c.PostForm("storageType")
-	volumeSize := util.Str(c.PostForm("volumeSize")).Int()
-
-	mysqlCluster := models.MysqlCluster{
-		Namespace:   namespace,
-		ClusterName: clusterName,
-		Member:      member,
-		User:        user,
-		Passwd:      password,
-		Port:        port,
-		MultiMaster: multiMaster,
-		Version:     version,
-		StorageType: storageType,
-		VolumeSize:  volumeSize,
-		ServiceUrl:  clusterName + "-router",
+	err := c.ShouldBind(&mysqlCluster)
+	if err != nil {
+		log.Error(err)
 	}
 
 	code := e.CREATED
 
-	isExisted := models.ExistMysqlCluster(clusterName)
+	isExisted := models.ExistMysqlCluster(mysqlCluster.ClusterName)
 	if isExisted {
-		log.Infof("cluster %v existed!", clusterName)
+		log.Infof("cluster %v existed!", mysqlCluster.ClusterName)
 		code = e.ERROR_ESIST_MYSQL
 	} else {
 		cStatus := models.AddMysqlCluster(&mysqlCluster)
@@ -66,13 +45,12 @@ func CreateMysqlCluster(c *gin.Context) {
 			code = e.ERROR_CREATE_MYSQL
 			log.Error("Failed to create mysql cluster!")
 		} else {
-			result, err := sync_status.K8sCreateMysqlCluster(&mysqlCluster)
+			_, err := sync.K8sCreateMysqlCluster(&mysqlCluster)
 			if err != nil {
 				log.Error("Failed to create mysqlcluster %v", mysqlCluster.ClusterName)
 				code = e.ERROR_CREATE_MYSQL
 			} else {
-				data["result"] = result
-				log.Infof("cluster %v created", clusterName)
+				log.Infof("cluster %v created", mysqlCluster.ClusterName)
 				code = e.CREATED
 			}
 		}
@@ -81,7 +59,7 @@ func CreateMysqlCluster(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"code": code,
 		"msg":  e.GetMsg(code),
-		"data": data,
+		"data": mysqlCluster,
 	})
 
 }
@@ -91,5 +69,21 @@ func UpdateMysqlCluster(c *gin.Context) {
 }
 
 func DeleteMysqlCluster(c *gin.Context) {
+	var code int
+	id := utils.Str(c.Param("id")).Int()
+	mysqlCluster, state := models.GetMysqlcluster(id)
+	if !state {
+		log.Error("mysql cluster does not existed")
+		code = e.MYSQL_DOES_NOT_ESIST
+	} else {
+		sync.K8sDeleteMysqlCluster(&mysqlCluster)
+		models.DeleteMysqlcluster(id)
+		code = e.MYSQL_DELETED
+	}
 
+	c.JSON(http.StatusOK, gin.H{
+		"code": code,
+		"msg":  e.GetMsg(code),
+		"data": nil,
+	})
 }

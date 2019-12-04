@@ -20,17 +20,18 @@ type Model struct {
 
 type MysqlCluster struct {
 	Model
-	Namespace   string `gorm:"default:'mysql-operator'" json:"namespace"`
-	ClusterName string `json:"db_instance_name"`
-	Member      int    `json:"member"`
-	User        string `gorm:"default:'root'" json:"db_user"`
-	Passwd      string `json:"db_passwd"`
-	Port        int    `gorm:"default:3306"json:"db_port"`
-	ServiceUrl  string `json:"db_service_url"`
-	MultiMaster bool   `json:"multiMaster"`
-	Version     string `json:"version"`
-	StorageType string `json:"storage_type"`
-	VolumeSize  int    `json:"volume_size"`
+	Namespace   string `form:"namespace,default=default" binding:"required"`
+	ClusterName string `form:"cluster_name" binding:"required"`
+	Member      int    `form:"member,default=1"`
+	User        string `form:"db_user,default=root"`
+	Password    string `form:"password" binding:"required"`
+	Port        int    `form:"db_port,default=3306"`
+	ServiceUrl  string `form:"db_service_url"`
+	MultiMaster bool   `form:"multi_master,default=true"`
+	Version     string `form:"version,default=8.0.12"`
+	StorageType string `form:"storage_type" binding:"required"`
+	VolumeSize  string `form:"volume_size,default=1Gi"`
+	Status      string `form:"status,default=NotReady"`
 }
 
 type MysqlConfig struct {

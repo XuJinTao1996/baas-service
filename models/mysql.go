@@ -13,10 +13,26 @@ func GetAllMysqlClusters() ([]MysqlCluster, int) {
 	return mysqls, count
 }
 
+// 获取指定的 mysql 实例
+func GetMysqlcluster(id int) (MysqlCluster, bool) {
+	var mysqlCluster MysqlCluster
+	db.First(&mysqlCluster, id)
+	if mysqlCluster.ID > 0 {
+		return mysqlCluster, true
+	}
+	return mysqlCluster, false
+}
+
+// 删除指定的 mysql 实例
+func DeleteMysqlcluster(id int) bool {
+	db.Where("id = ?", id).Delete(&MysqlCluster{})
+	return true
+}
+
 // 判断是否存在该 mysql 实例
 func ExistMysqlCluster(db_instance_name string) bool {
 	var mysql MysqlCluster
-	db.Select("id").Where("cluster_name=?", db_instance_name).First(&mysql)
+	db.Select("id").Where("cluster_name = ?", db_instance_name).First(&mysql)
 	if mysql.ID > 0 {
 		return true
 	}

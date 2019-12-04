@@ -1,28 +1,31 @@
-package sync_status
+package sync
 
 import (
 	"baas-service/models"
-	"baas-service/pkg/k8s_client"
-	"baas-service/pkg/util"
+	"baas-service/pkg/informer"
+	"baas-service/pkg/k8s/client"
+	"baas-service/pkg/utils"
+	"fmt"
 	"github.com/google/martian/log"
 	mysqlv1alpha1 "github.com/oracle/mysql-operator/pkg/apis/mysql/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
 
 var (
 	ClusterConfig  *rest.Config
-	MysqlClientset *k8s_client.ClusterClient
+	MysqlClientset *client.ClusterClient
 	K8sClient      *kubernetes.Clientset
 )
 
 func init() {
-	ClusterConfig = k8s_client.Load_K8s_Config()
-	MysqlClientset, _ = k8s_client.NewForConfig(ClusterConfig, mysqlv1alpha1.GroupName, "v1alpha1")
+	ClusterConfig = client.LoadK8sConfig()
+	MysqlClientset, _ = client.NewForConfig(ClusterConfig, mysqlv1alpha1.GroupName, "v1alpha1")
 	K8sClient, _ = kubernetes.NewForConfig(ClusterConfig)
 }
 
@@ -34,25 +37,21 @@ func K8sGetMysqlClsuter() *mysqlv1alpha1.ClusterList {
 	return mysqlcluster
 }
 
+// 在 k8s 集群里创建完整的 mysql 集群实例
 func K8sCreateMysqlCluster(mysql *models.MysqlCluster) (*mysqlv1alpha1.Cluster, error) {
-
-	passwordSecretName := mysql.ClusterName + mysql.User + "-password"
-	mysqlConfigName := mysql.ClusterName + "-config"
-	mysqlRouterName := mysql.ClusterName + "-router"
-	mysqlHost := mysql.ClusterName + "-0" + "." + mysql.ClusterName
 
 	data := make(map[string]string)
 	data["my.cnf"] = "[mysqld]" + "\n" +
 		"default_authentication_plugin=mysql_native_password"
 
-	secret, secretErr := createMysqlPasswordSecret(mysql.Namespace, passwordSecretName, mysql.Passwd)
+	secret, secretErr := createMysqlPasswordSecret(mysql.Namespace, mysql.SecretName(), mysql.Password)
 	if secretErr != nil {
 		log.Errorf("failed to create secret: %v", secretErr)
 	} else {
 		log.Infof("%v", secret)
 	}
 
-	configmap, configErr := createMysqlConfig(mysql.Namespace, mysqlConfigName, data)
+	configmap, configErr := createMysqlConfig(mysql.Namespace, mysql.ConfigmapName(), data)
 	if configErr != nil {
 		log.Errorf("failed to create configmap: %v", configErr)
 	} else {
@@ -68,22 +67,25 @@ func K8sCreateMysqlCluster(mysql *models.MysqlCluster) (*mysqlv1alpha1.Cluster, 
 			Name: mysql.ClusterName,
 		},
 		Spec: mysqlv1alpha1.ClusterSpec{
+			Members:     int32(mysql.Member),
 			MultiMaster: mysql.MultiMaster,
 			Version:     mysql.Version,
 			RootPasswordSecret: &corev1.LocalObjectReference{
-				Name: passwordSecretName,
+				Name: mysql.SecretName(),
 			},
 			Config: &corev1.LocalObjectReference{
-				Name: mysqlConfigName,
+				Name: mysql.ConfigmapName(),
 			},
 			VolumeClaimTemplate: &corev1.PersistentVolumeClaim{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "data",
 				},
 				Spec: corev1.PersistentVolumeClaimSpec{
-					AccessModes: []corev1.PersistentVolumeAccessMode{"ReadWriteMany"},
+					AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteMany},
 					Resources: corev1.ResourceRequirements{
-						Requests: corev1.ResourceList{"storage": resource.Quantity{}},
+						Requests: corev1.ResourceList{
+							corev1.ResourceStorage: resource.MustParse(mysql.VolumeSize),
+						},
 					},
 					StorageClassName: &mysql.StorageType,
 				},
@@ -96,16 +98,16 @@ func K8sCreateMysqlCluster(mysql *models.MysqlCluster) (*mysqlv1alpha1.Cluster, 
 		panic(err)
 	}
 
-	mysqlRouter, routerErr := createMysqlRouter(mysql.Namespace, mysqlRouterName, passwordSecretName, mysqlHost, mysql.Member, mysql.Port)
+	mysqlRouter, routerErr := createMysqlRouter(mysql.Namespace, mysql.RouterDeploymentName(), mysql.SecretName(), mysql.MysqlHostName(), mysql.Member, mysql.Port)
 	if routerErr != nil {
 		log.Errorf("failed create mysql router: %v", routerErr)
 	} else {
 		log.Infof("%v", mysqlRouter)
 	}
 
-	mysqlRouterService, serviceErr := createMysqlRouterService(mysql.Namespace, mysqlRouterName, mysqlRouterName, mysql.Port)
+	mysqlRouterService, serviceErr := createMysqlRouterService(mysql.Namespace, mysql.RouterDeploymentName(), mysql.RouterDeploymentName(), mysql.Port)
 	if serviceErr != nil {
-		log.Errorf("failed create mysql router service: %v", routerErr)
+		log.Errorf("failed create mysql router service: %v", serviceErr)
 	} else {
 		log.Infof("%v", mysqlRouterService)
 	}
@@ -182,7 +184,7 @@ func createMysqlRouter(ns, name, passwdSecretName, host string, num int, port in
 							},
 							{
 								Name:  "MYSQL_PORT",
-								Value: util.Int(port).Str(),
+								Value: utils.Int(port).Str(),
 							},
 							{
 								Name:  "MYSQL_HOST",
@@ -190,7 +192,7 @@ func createMysqlRouter(ns, name, passwdSecretName, host string, num int, port in
 							},
 							{
 								Name:  "MYSQL_INNODB_NUM_MEMBERS",
-								Value: util.Int(num).Str(),
+								Value: utils.Int(num).Str(),
 							},
 						},
 					}},
@@ -216,8 +218,10 @@ func createMysqlRouterService(ns, name, appName string, port int) (*corev1.Servi
 		Spec: corev1.ServiceSpec{
 			Ports: []corev1.ServicePort{
 				{
-					Port:     int32(port),
-					Protocol: "tcp",
+					Name:       name,
+					Protocol:   corev1.ProtocolTCP,
+					Port:       int32(port),
+					TargetPort: intstr.IntOrString{IntVal: 6446},
 				},
 			},
 			Selector: labelSelector,
@@ -227,4 +231,51 @@ func createMysqlRouterService(ns, name, appName string, port int) (*corev1.Servi
 
 	result, err := K8sClient.CoreV1().Services(ns).Create(&mysqlRouterService)
 	return result, err
+}
+
+// 在 k8s 中删除指定的 mysql 实例
+func K8sDeleteMysqlCluster(mysql *models.MysqlCluster) {
+	err := MysqlClientset.Clusters(mysql.Namespace).Delete(mysql.ClusterName)
+	if err != nil {
+		log.Errorf("failed to delete mysqlcluster %v", err)
+	}
+	deleteMysqlPasswordSecret(mysql)
+	deleteMysqMysqlConfig(mysql)
+	deleteMysqMysqlRouter(mysql)
+	deleteMysqlRouterService(mysql)
+}
+
+func deleteMysqlPasswordSecret(mysql *models.MysqlCluster) {
+	err := K8sClient.CoreV1().Secrets(mysql.Namespace).Delete(mysql.SecretName(), &metav1.DeleteOptions{})
+	if err != nil {
+		log.Errorf("failed to delete Secrets%v", err)
+	}
+}
+
+func deleteMysqMysqlConfig(mysql *models.MysqlCluster) {
+	err := K8sClient.CoreV1().ConfigMaps(mysql.Namespace).Delete(mysql.ConfigmapName(), &metav1.DeleteOptions{})
+	if err != nil {
+		log.Errorf("failed to delete MysqMysqlConfig %v", err)
+	}
+}
+
+func deleteMysqMysqlRouter(mysql *models.MysqlCluster) {
+	err := K8sClient.ExtensionsV1beta1().Deployments(mysql.Namespace).Delete(mysql.RouterDeploymentName(), &metav1.DeleteOptions{})
+	if err != nil {
+		log.Errorf("failed to delete Deployments %v", err)
+	}
+}
+
+func deleteMysqlRouterService(mysql *models.MysqlCluster) {
+	err := K8sClient.CoreV1().Services(mysql.Namespace).Delete(mysql.RouterDeploymentName(), &metav1.DeleteOptions{})
+	if err != nil {
+		log.Errorf("failed to delete Services %v", err)
+	}
+}
+
+// 判断 mysql cluster 状态是否有变化，如果有变化，与数据库进行同步
+func syncMysqlClusterStatus() {
+	store := informer.WatchResources(MysqlClientset)
+	mysqlcluster, t, err := store.GetByKey("mysql-operator")
+	fmt.Println(mysqlcluster, t, err)
 }
