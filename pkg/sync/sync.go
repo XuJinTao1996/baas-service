@@ -2,7 +2,6 @@ package sync
 
 import (
 	"baas-service/models"
-	"baas-service/pkg/informer"
 	"baas-service/pkg/k8s/client"
 	"baas-service/pkg/utils"
 	"github.com/google/martian/log"
@@ -26,16 +25,6 @@ func init() {
 	ClusterConfig = client.LoadK8sConfig()
 	MysqlClientset, _ = client.NewForConfig(ClusterConfig, mysqlv1alpha1.GroupName, "v1alpha1")
 	K8sClient, _ = kubernetes.NewForConfig(ClusterConfig)
-	startDeploymentInformer()
-	startMysqlClusterInformer()
-}
-
-func startDeploymentInformer() {
-	informer.DeploymentInformer(K8sClient)
-}
-
-func startMysqlClusterInformer() {
-	informer.MysqlClusterInformer(MysqlClientset)
 }
 
 func K8sGetMysqlClsuter() *mysqlv1alpha1.ClusterList {

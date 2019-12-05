@@ -3,12 +3,26 @@ package v1
 import (
 	"baas-service/models"
 	"baas-service/pkg/e"
+	"baas-service/pkg/informer"
 	"baas-service/pkg/sync"
 	"baas-service/pkg/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/common/log"
 	"net/http"
 )
+
+func init() {
+	startDeploymentInformer()
+	startMysqlClusterInformer()
+}
+
+func startDeploymentInformer() {
+	informer.DeploymentInformer(K8sClient)
+}
+
+func startMysqlClusterInformer() {
+	informer.MysqlClusterInformer(MysqlClientset)
+}
 
 // 获取指定 mysql 实例
 func GetMysqlCluster(c *gin.Context) {
