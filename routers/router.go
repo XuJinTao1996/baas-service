@@ -19,7 +19,9 @@ func InitRouter() *gin.Engine {
 	{
 
 		// 获取 mysql 实例列表
-		apiv1.GET("/mysql", v1.GetMysqlClusters)
+		apiv1.GET("/mysql", v1.ListMysqlCluster)
+		// 获取指定 mysql 实例
+		apiv1.GET("/mysql/:id", v1.GetMysqlCluster)
 		// 新建 mysql 实例
 		apiv1.POST("/mysql", v1.CreateMysqlCluster)
 		// 更新指定 mysql 实例

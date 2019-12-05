@@ -10,8 +10,27 @@ import (
 	"net/http"
 )
 
+// 获取指定 mysql 实例
+func GetMysqlCluster(c *gin.Context) {
+	var code int
+	id := utils.Str(c.Param("id")).Int()
+	mysqlCluster, state := models.GetMysqlcluster(id)
+	if !state {
+		code = e.MYSQL_DOES_NOT_ESIST
+		log.Errorf("cluster does not exist!")
+	} else {
+		code = e.SUCCESS
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code": code,
+		"msg":  e.GetMsg(code),
+		"data": mysqlCluster,
+	})
+}
+
 // 获取所有 mysql 集群
-func GetMysqlClusters(c *gin.Context) {
+func ListMysqlCluster(c *gin.Context) {
 
 	data := make(map[string]interface{})
 
@@ -32,6 +51,8 @@ func CreateMysqlCluster(c *gin.Context) {
 	if err != nil {
 		log.Error(err)
 	}
+
+	mysqlCluster.Host = mysqlCluster.RouterDeploymentName()
 
 	code := e.CREATED
 

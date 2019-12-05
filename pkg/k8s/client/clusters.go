@@ -1,7 +1,6 @@
 package client
 
 import (
-	"fmt"
 	mysqlv1alpha1 "github.com/oracle/mysql-operator/pkg/apis/mysql/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
@@ -17,7 +16,7 @@ type ClusterInterface interface {
 	//Get(name string, opts metav1.ListOptions) (*mysqlv1alpha1.Cluster, error)
 	Create(cluster *mysqlv1alpha1.Cluster) (*mysqlv1alpha1.Cluster, error)
 	Watch(opts metav1.ListOptions) (watch.Interface, error)
-	Delete(name string) error
+	Delete(name string, opts metav1.ListOptions) error
 }
 
 type mysqlClusterClient struct {
@@ -27,9 +26,13 @@ type mysqlClusterClient struct {
 
 func (c *mysqlClusterClient) List(opts metav1.ListOptions) (*mysqlv1alpha1.ClusterList, error) {
 	result := mysqlv1alpha1.ClusterList{}
-	err := c.restClient.Get().Namespace(c.ns).Resource("mysqlclusters").Do().Into(&result)
-
-	fmt.Println(result)
+	err := c.restClient.
+		Get().
+		Namespace(c.ns).
+		Resource("mysqlclusters").
+		VersionedParams(&opts, scheme.ParameterCodec).
+		Do().
+		Into(&result)
 
 	return &result, err
 }
@@ -56,11 +59,12 @@ func (c *mysqlClusterClient) Watch(opt metav1.ListOptions) (watch.Interface, err
 		Watch()
 }
 
-func (c *mysqlClusterClient) Delete(name string) error {
+func (c *mysqlClusterClient) Delete(name string, opts metav1.ListOptions) error {
 	return c.restClient.
 		Delete().
 		Namespace(c.ns).
 		Resource("mysqlclusters").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Name(name).
 		Do().
 		Error()

@@ -5,11 +5,10 @@ import (
 	"baas-service/pkg/informer"
 	"baas-service/pkg/k8s/client"
 	"baas-service/pkg/utils"
-	"fmt"
 	"github.com/google/martian/log"
 	mysqlv1alpha1 "github.com/oracle/mysql-operator/pkg/apis/mysql/v1alpha1"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -27,6 +26,16 @@ func init() {
 	ClusterConfig = client.LoadK8sConfig()
 	MysqlClientset, _ = client.NewForConfig(ClusterConfig, mysqlv1alpha1.GroupName, "v1alpha1")
 	K8sClient, _ = kubernetes.NewForConfig(ClusterConfig)
+	startDeploymentInformer()
+	startMysqlClusterInformer()
+}
+
+func startDeploymentInformer() {
+	informer.DeploymentInformer(K8sClient)
+}
+
+func startMysqlClusterInformer() {
+	informer.MysqlClusterInformer(MysqlClientset)
 }
 
 func K8sGetMysqlClsuter() *mysqlv1alpha1.ClusterList {
@@ -34,6 +43,7 @@ func K8sGetMysqlClsuter() *mysqlv1alpha1.ClusterList {
 	if err != nil {
 		panic(err)
 	}
+
 	return mysqlcluster
 }
 
@@ -142,16 +152,16 @@ func createMysqlConfig(ns, name string, data map[string]string) (*corev1.ConfigM
 }
 
 // 部署 mysql router 实例，用于自动识别 读/写 请求
-func createMysqlRouter(ns, name, passwdSecretName, host string, num int, port int) (*v1beta1.Deployment, error) {
+func createMysqlRouter(ns, name, passwdSecretName, host string, num int, port int) (*appsv1.Deployment, error) {
 
 	labelSelector := make(map[string]string)
 	labelSelector["app"] = name
 
-	routerDeployment := v1beta1.Deployment{
+	routerDeployment := appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 		},
-		Spec: v1beta1.DeploymentSpec{
+		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{
 				MatchLabels: labelSelector,
 			},
@@ -201,7 +211,7 @@ func createMysqlRouter(ns, name, passwdSecretName, host string, num int, port in
 		},
 	}
 
-	result, err := K8sClient.ExtensionsV1beta1().Deployments(ns).Create(&routerDeployment)
+	result, err := K8sClient.AppsV1().Deployments(ns).Create(&routerDeployment)
 	return result, err
 }
 
@@ -235,7 +245,7 @@ func createMysqlRouterService(ns, name, appName string, port int) (*corev1.Servi
 
 // 在 k8s 中删除指定的 mysql 实例
 func K8sDeleteMysqlCluster(mysql *models.MysqlCluster) {
-	err := MysqlClientset.Clusters(mysql.Namespace).Delete(mysql.ClusterName)
+	err := MysqlClientset.Clusters(mysql.Namespace).Delete(mysql.ClusterName, metav1.ListOptions{})
 	if err != nil {
 		log.Errorf("failed to delete mysqlcluster %v", err)
 	}
@@ -260,7 +270,7 @@ func deleteMysqMysqlConfig(mysql *models.MysqlCluster) {
 }
 
 func deleteMysqMysqlRouter(mysql *models.MysqlCluster) {
-	err := K8sClient.ExtensionsV1beta1().Deployments(mysql.Namespace).Delete(mysql.RouterDeploymentName(), &metav1.DeleteOptions{})
+	err := K8sClient.AppsV1().Deployments(mysql.Namespace).Delete(mysql.RouterDeploymentName(), &metav1.DeleteOptions{})
 	if err != nil {
 		log.Errorf("failed to delete Deployments %v", err)
 	}
@@ -273,9 +283,16 @@ func deleteMysqlRouterService(mysql *models.MysqlCluster) {
 	}
 }
 
-// 判断 mysql cluster 状态是否有变化，如果有变化，与数据库进行同步
-func syncMysqlClusterStatus() {
-	store := informer.WatchResources(MysqlClientset)
-	mysqlcluster, t, err := store.GetByKey("mysql-operator")
-	fmt.Println(mysqlcluster, t, err)
+func SyncMysqlClusterStatus(name, status string) bool {
+	mysqCluster, state := models.GetMysqlclusterByName(name)
+	if !state {
+		log.Errorf("mysql cluster does not exist!")
+		return false
+	}
+	newMysqlCluster, result := models.UpdateMysqlCluster(mysqCluster, status)
+	if !result {
+		log.Errorf("mysql cluster %v update failed", newMysqlCluster.ClusterName)
+		return false
+	}
+	return true
 }

@@ -9,6 +9,7 @@ require (
 	github.com/gin-gonic/gin v1.5.0
 	github.com/go-ini/ini v1.51.0
 	github.com/gogo/protobuf v1.2.2-0.20190723190241-65acae22fc9d // indirect
+	github.com/golang/groupcache v0.0.0-20191027212112-611e8accdfc9 // indirect
 	github.com/google/go-cmp v0.3.0 // indirect
 	github.com/google/martian v2.1.0+incompatible
 	github.com/googleapis/gnostic v0.0.0-20170729233727-0c5108395e2d // indirect

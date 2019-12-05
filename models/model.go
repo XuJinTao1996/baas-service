@@ -26,8 +26,8 @@ type MysqlCluster struct {
 	User        string `form:"db_user,default=root"`
 	Password    string `form:"password" binding:"required"`
 	Port        int    `form:"db_port,default=3306"`
-	ServiceUrl  string `form:"db_service_url"`
-	MultiMaster bool   `form:"multi_master,default=true"`
+	Host        string `form:"host"`
+	MultiMaster bool   `form:"multi_master,default=false"`
 	Version     string `form:"version,default=8.0.12"`
 	StorageType string `form:"storage_type" binding:"required"`
 	VolumeSize  string `form:"volume_size,default=1Gi"`
@@ -42,15 +42,15 @@ type MysqlConfig struct {
 // 初始化创建数据表
 func init() {
 	var err error
-	db_file := setting.DBFile
-	db_type := setting.DBType
-	table_prefix := setting.TablePrefix
-	db, err = gorm.Open(db_type, db_file)
+	dbFile := setting.DBFile
+	dbType := setting.DBType
+	tablePrefix := setting.TablePrefix
+	db, err = gorm.Open(dbType, dbFile)
 	if err != nil {
 		log.Fatal("Failed to open the db file: %v", err)
 	}
 	gorm.DefaultTableNameHandler = func(db *gorm.DB, defaultTableName string) string {
-		return table_prefix + defaultTableName
+		return tablePrefix + defaultTableName
 	}
 	db.AutoMigrate(&MysqlCluster{})
 }
