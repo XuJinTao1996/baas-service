@@ -90,7 +90,8 @@ func CreateMysqlCluster(c *gin.Context) {
 		return
 	}
 
-	mysqlCluster.Host = mysqlCluster.RouterDeploymentName()
+	mysqlCluster.SetHost()
+	mysqlCluster.SetPassword()
 
 	if mysqlCluster.Member == 1 {
 		mysqlCluster.MultiMaster = false

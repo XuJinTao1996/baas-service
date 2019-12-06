@@ -5,9 +5,12 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )
 
-func (mysqlCluster MysqlCluster) Response() MysqlCluster {
+func (mysqlCluster *MysqlCluster) SetPassword() {
 	mysqlCluster.Password = base64.StdEncoding.EncodeToString([]byte(mysqlCluster.Password))
-	return mysqlCluster
+}
+
+func (mysqlCluster *MysqlCluster) SetHost() {
+	mysqlCluster.Host = mysqlCluster.RouterDeploymentName()
 }
 
 // 通过 ID 获取指定的 mysql 实例
@@ -15,9 +18,9 @@ func GetMysqlcluster(id int) (MysqlCluster, bool) {
 	var mysqlCluster MysqlCluster
 	db.First(&mysqlCluster, id).Assign("password", "******")
 	if mysqlCluster.ID > 0 {
-		return mysqlCluster.Response(), true
+		return mysqlCluster, true
 	}
-	return mysqlCluster.Response(), false
+	return mysqlCluster, false
 }
 
 // 通过 mysqlcluster name 获取指定的 mysql 实例
@@ -27,7 +30,7 @@ func GetMysqlclusterByName(name string) (MysqlCluster, bool) {
 	if mysqlCluster.ID > 0 {
 		return mysqlCluster, true
 	}
-	return mysqlCluster.Response(), false
+	return mysqlCluster, false
 }
 
 // 获取所有 mysql 实例的函数
@@ -56,9 +59,9 @@ func ExistMysqlCluster(clusterName string) bool {
 }
 
 // 创建数据库实例
-func AddMysqlCluster(mysqlCluster *MysqlCluster) (MysqlCluster, bool) {
+func AddMysqlCluster(mysqlCluster *MysqlCluster) (*MysqlCluster, bool) {
 	db.Create(&mysqlCluster)
-	return mysqlCluster.Response(), true
+	return mysqlCluster, true
 }
 
 // 更新数据库实例
