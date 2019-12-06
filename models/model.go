@@ -9,39 +9,36 @@ import (
 
 var db *gorm.DB
 
-// base model
+// 基础模型
 type Model struct {
 	ID        int        `gorm:"primary_key" json:"id"`
 	UID       int        `json:"uid"`
-	CreatedAt time.Time  `gorm:"column:created_at;"`
-	UpdatedAt time.Time  `gorm:"column:updated_at;"`
-	DeletedAt *time.Time `gorm:"column:deleted_at;index;"`
+	CreatedAt time.Time  `gorm:"column:created_at;" json:"created_at"`
+	UpdatedAt time.Time  `gorm:"column:updated_at;" json:"updated_at"`
+	DeletedAt *time.Time `gorm:"column:deleted_at;index;" json:"deleted_at"`
 }
 
+// mysql cluster 模型
 type MysqlCluster struct {
 	Model
-	Namespace   string `form:"namespace,default=default" binding:"required"`
-	ClusterName string `form:"cluster_name" binding:"required"`
-	Member      int    `form:"member,default=1"`
-	User        string `form:"db_user,default=root"`
-	Password    string `form:"password" binding:"required"`
-	Port        int    `form:"db_port,default=3306"`
-	Host        string `form:"host"`
-	MultiMaster bool   `form:"multi_master,default=false"`
-	Version     string `form:"version,default=8.0.12"`
-	StorageType string `form:"storage_type" binding:"required"`
-	VolumeSize  string `form:"volume_size,default=1Gi"`
-	Status      string `form:"status,default=NotReady"`
-}
-
-type MysqlConfig struct {
-	Name string `json:"name"`
-	Data string `json:"data"`
+	Namespace   string `form:"namespace,default=default" json:"namespace" binding:"required"`
+	ClusterName string `form:"cluster_name" json:"cluster_name" binding:"required"`
+	Member      int    `form:"member,default=1" json:"member"`
+	User        string `form:"db_user,default=root" json:"user"`
+	Password    string `form:"password" json:"password" binding:"required"`
+	Port        int    `form:"db_port,default=3306" json:"port"`
+	Host        string `form:"host" json:"host"`
+	MultiMaster bool   `form:"multi_master,default=false" json:"multi_master"`
+	Version     string `form:"version,default=8.0.12" json:"version"`
+	StorageType string `form:"storage_type" binding:"required" json:"storage_type"`
+	VolumeSize  string `form:"volume_size,default=1Gi" json:"volume_size"`
+	Status      string `form:"status,default=NotReady" json:"status"`
 }
 
 // 初始化创建数据表
 func init() {
 	var err error
+	CloseDB()
 	dbFile := setting.DBFile
 	dbType := setting.DBType
 	tablePrefix := setting.TablePrefix
@@ -53,4 +50,8 @@ func init() {
 		return tablePrefix + defaultTableName
 	}
 	db.AutoMigrate(&MysqlCluster{})
+}
+
+func CloseDB() {
+	defer db.Close()
 }

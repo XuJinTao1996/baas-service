@@ -1,0 +1,69 @@
+definitions:
+  models.MysqlCluster:
+    properties:
+      cluster_name:
+        type: string
+      created_at:
+        type: string
+      deleted_at:
+        type: string
+      host:
+        type: string
+      id:
+        type: integer
+      member:
+        type: integer
+      multi_master:
+        type: boolean
+      namespace:
+        type: string
+      password:
+        type: string
+      port:
+        type: integer
+      status:
+        type: string
+      storage_type:
+        type: string
+      uid:
+        type: integer
+      updated_at:
+        type: string
+      user:
+        type: string
+      version:
+        type: string
+      volume_size:
+        type: string
+    required:
+    - cluster_name
+    - namespace
+    - password
+    - storage_type
+    type: object
+info:
+  contact: {}
+  license: {}
+paths:
+  /api/v1/mysql:
+    post:
+      parameters:
+      - description: Namespace
+        in: query
+        name: namespace
+        required: true
+        type: string
+      - description: ClusterName
+        in: query
+        name: cluster_name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.MysqlCluster'
+      summary: 新增 mysql cluster 实例
+swagger: "2.0"

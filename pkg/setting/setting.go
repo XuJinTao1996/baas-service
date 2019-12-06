@@ -57,7 +57,7 @@ func LoadDatabase() {
 	}
 
 	DBType = sec.Key("DB_TYPE").MustString("sqlite3")
-	DBFile = sec.Key("DB_FILE").MustString("sqlite3")
-	DBName = sec.Key("DB_NAME").MustString("sqlite3")
-	TablePrefix = sec.Key("TABLE_PREFIX").MustString("sqlite3")
+	DBFile = sec.Key("DB_FILE").MustString("baas.db")
+	DBName = sec.Key("DB_NAME").MustString("baas")
+	TablePrefix = sec.Key("TABLE_PREFIX").MustString("baas_")
 }

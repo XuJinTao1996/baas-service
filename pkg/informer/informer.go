@@ -1,8 +1,8 @@
 package informer
 
 import (
+	"baas-service/models"
 	"baas-service/pkg/k8s/client"
-	"baas-service/pkg/sync"
 	"fmt"
 	"github.com/google/martian/log"
 	mysqlv1alpha1 "github.com/oracle/mysql-operator/pkg/apis/mysql/v1alpha1"
@@ -18,22 +18,21 @@ import (
 	"time"
 )
 
+// 对 mysql cluster 资源的 list & watch
 func MysqlClusterInformer(clientSet client.BaseClientInterface) {
 	_, clusterController := cache.NewInformer(&cache.ListWatch{
 		ListFunc: func(opt metav1.ListOptions) (result runtime.Object, e error) {
-			return clientSet.Clusters("mysql-operator").List(opt)
+			return clientSet.Clusters("").List(opt)
 		},
 		WatchFunc: func(opt metav1.ListOptions) (i watch.Interface, e error) {
-			return clientSet.Clusters("mysql-operator").Watch(opt)
+			return clientSet.Clusters("").Watch(opt)
 		},
 	},
 		&mysqlv1alpha1.Cluster{},
 		1*time.Minute,
 		cache.ResourceEventHandlerFuncs{
-			AddFunc: onAddMysql,
-			UpdateFunc: func(oldObj, newObj interface{}) {
-				fmt.Println("update mysqlcluster", oldObj.(*mysqlv1alpha1.Cluster).Status)
-			},
+			AddFunc:    onAddMysql,
+			UpdateFunc: onUpdateMysqlCluster,
 		},
 	)
 
@@ -42,7 +41,7 @@ func MysqlClusterInformer(clientSet client.BaseClientInterface) {
 
 func onAddMysql(obj interface{}) {
 	mysqlcluster := obj.(*mysqlv1alpha1.Cluster)
-	fmt.Println("add a mysqlcluster", mysqlcluster.Name)
+	log.Infof("add a mysql cluster", mysqlcluster.Name)
 }
 
 func DeploymentInformer(clientSet *kubernetes.Clientset) {
@@ -54,29 +53,48 @@ func DeploymentInformer(clientSet *kubernetes.Clientset) {
 	go factory.Start(wait.NeverStop)
 
 	if !cache.WaitForCacheSync(wait.NeverStop, deploymentInformer.HasSynced) {
-		utilruntime.HandleError(fmt.Errorf("Timed out waiting for caches to sync"))
+		utilruntime.HandleError(fmt.Errorf("Time out waiting for caches to sync"))
 		return
 	}
 
 	// 使用自定义事件 handler
 	deploymentInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc:    onAdd,
-		UpdateFunc: onUpdate,
-		DeleteFunc: func(interface{}) { fmt.Println("delete not implemented") },
+		AddFunc:    onAddDeployment,
+		UpdateFunc: onUpdateDeployment,
 	})
 }
 
-func onAdd(obj interface{}) {
+func onAddDeployment(obj interface{}) {
 	deployment := obj.(*appsv1.Deployment)
-	fmt.Println("add a deployment", deployment.Name)
+	log.Infof("add a deployment", deployment.Name)
 }
 
-// update mysql cluster
-func onUpdate(oldobj, newobj interface{}) {
-	mysqlCluster := newobj.(*mysqlv1alpha1.Cluster)
-	state := mysqlCluster.Status.Conditions[0].Type
-	result := sync.SyncMysqlClusterStatus(mysqlCluster.Name, string(state))
-	if result {
-		log.Infof("success update mysql cluster %v", mysqlCluster.Name)
+func onUpdateDeployment(oldObj, newObj interface{}) {
+	deployment := newObj.(*appsv1.Deployment)
+	log.Infof("add a deployment", deployment.Name)
+}
+
+// 更新 mysql cluster 的状态
+func onUpdateMysqlCluster(oldObj, newObj interface{}) {
+	k8sMysqlCluster := oldObj.(*mysqlv1alpha1.Cluster)
+	state := k8sMysqlCluster.Status.Conditions
+	if len(state) > 0 {
+
+		mysqlCluster, result := models.GetMysqlclusterByName(k8sMysqlCluster.Name)
+		if !result {
+			log.Errorf("mysql cluster does not exist!")
+			return
+		}
+
+		if string(state[0].Type) == mysqlCluster.Status {
+			log.Infof("mysql cluster status has no changed!")
+			return
+		}
+
+		newMysqlCluster, result := models.UpdateMysqlCluster(mysqlCluster, string(state[0].Type))
+		if !result {
+			log.Errorf("mysql cluster %v update failed", newMysqlCluster.ClusterName)
+			return
+		}
 	}
 }

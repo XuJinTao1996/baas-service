@@ -1,0 +1,105 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "contact": {},
+        "license": {}
+    },
+    "paths": {
+        "/api/v1/mysql": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "新增 mysql cluster 实例",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Namespace",
+                        "name": "namespace",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "ClusterName",
+                        "name": "cluster_name",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.MysqlCluster"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "models.MysqlCluster": {
+            "type": "object",
+            "required": [
+                "cluster_name",
+                "namespace",
+                "password",
+                "storage_type"
+            ],
+            "properties": {
+                "cluster_name": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "deleted_at": {
+                    "type": "string"
+                },
+                "host": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "member": {
+                    "type": "integer"
+                },
+                "multi_master": {
+                    "type": "boolean"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "port": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "storage_type": {
+                    "type": "string"
+                },
+                "uid": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                },
+                "volume_size": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

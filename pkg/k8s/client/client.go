@@ -4,9 +4,22 @@ import (
 	mysqlv1alpha1 "github.com/oracle/mysql-operator/pkg/apis/mysql/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 )
+
+var (
+	ClusterConfig  *rest.Config
+	MysqlClientset *ClusterClient
+	K8sClient      *kubernetes.Clientset
+)
+
+func init() {
+	ClusterConfig = LoadK8sConfig()
+	MysqlClientset, _ = NewForConfig(ClusterConfig, mysqlv1alpha1.GroupName, "v1alpha1")
+	K8sClient, _ = kubernetes.NewForConfig(ClusterConfig)
+}
 
 type BaseClientInterface interface {
 	Clusters(namespace string) ClusterInterface

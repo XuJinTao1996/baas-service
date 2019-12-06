@@ -1,19 +1,26 @@
 package routers
 
 import (
-	v1 "baas-service/pkg/controllers/v1"
+	_ "baas-service/docs"
+	"baas-service/pkg/middleware"
 	"baas-service/pkg/setting"
+	v1 "baas-service/routers/api/v1"
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func InitRouter() *gin.Engine {
-	r := gin.New()
 
-	r.Use(gin.Logger())
+	gin.SetMode(setting.RunMode)
+
+	r := gin.New()
 
 	r.Use(gin.Recovery())
 
-	gin.SetMode(setting.RunMode)
+	r.Use(middleware.Logger())
+
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	apiv1 := r.Group("/api/v1")
 	{
