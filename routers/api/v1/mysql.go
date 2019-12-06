@@ -28,12 +28,14 @@ func startMysqlClusterInformer() {
 	informer.MysqlClusterInformer(client.MysqlClientset)
 }
 
-// 获取指定 mysql 实例
+// @Summary Get a single mysql cluster
+// @Produce  json
+// @Param id path int true "ID"
+// @Success 200 {object} app.Response
+// @Failure 500 {object} app.Response
+// @Router /api/v1/mysql/{id} [get]
 func GetMysqlCluster(c *gin.Context) {
-	var (
-		appG = app.Gin{C: c}
-		code = e.SUCCESS
-	)
+	appG := app.Gin{C: c}
 
 	id := utils.Str(c.Param("id")).Int()
 	mysqlCluster, state := models.GetMysqlcluster(id)
@@ -44,28 +46,25 @@ func GetMysqlCluster(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"code": code,
-		"msg":  e.GetMsg(code),
-		"data": mysqlCluster,
-	})
+	appG.Response(http.StatusOK, e.SUCCESS, mysqlCluster)
 }
 
-// 获取所有 mysql 集群
+// @Summary Get all mysql cluster
+// @Produce json
+// @Success 200 {object} app.Response
+// @Failure 500 {object} app.Response
+// @Router /api/v1/mysqls [get]
 func ListMysqlCluster(c *gin.Context) {
+	appG := app.Gin{C: c}
 
 	data := make(map[string]interface{})
 
 	data["list"], data["total"] = models.GetAllMysqlClusters()
 
-	c.JSON(http.StatusOK, gin.H{
-		"code": e.SUCCESS,
-		"msg":  e.GetMsg(e.SUCCESS),
-		"data": data,
-	})
+	appG.Response(http.StatusOK, e.SUCCESS, data)
 }
 
-// @Summary 新增 mysql cluster 实例
+// @Summary add mysql cluster
 // @Produce json
 // @Param 	namespace query string true "Namespace"
 // @Param   cluster_name query string true "ClusterName"
@@ -75,14 +74,13 @@ func ListMysqlCluster(c *gin.Context) {
 // @Param   multi_master query bool true "multi_master"
 // @Param   version query string false "version"
 // @Param   port query int false "port"
-// @Success 200 {object} models.MysqlCluster
-// @Failure 500 {string} json "{"code":500,"data":nil,"msg":"mysql 创建失败"}"
+// @Success 200 {object} app.Response
+// @Failure 500 {object} app.Response
 // @Router /api/v1/mysql [post]
 func CreateMysqlCluster(c *gin.Context) {
 	var (
 		mysqlCluster models.MysqlCluster
 		appG         = app.Gin{C: c}
-		code         = e.CREATED
 	)
 
 	err := c.ShouldBind(&mysqlCluster)
@@ -116,13 +114,7 @@ func CreateMysqlCluster(c *gin.Context) {
 		return
 	}
 
-	log.Infof("cluster %v created", mysqlCluster.ClusterName)
-
-	c.JSON(http.StatusOK, gin.H{
-		"code": code,
-		"msg":  e.GetMsg(code),
-		"data": newMysqlCluster,
-	})
+	appG.Response(http.StatusOK, e.CREATED, newMysqlCluster)
 
 }
 
@@ -131,11 +123,14 @@ func UpdateMysqlCluster(c *gin.Context) {
 
 }
 
+// @Summary Delete mysql cluster
+// @Produce  json
+// @Param id path int true "ID"
+// @Success 200 {object} app.Response
+// @Failure 500 {object} app.Response
+// @Router /api/v1/mysql/{id} [delete]
 func DeleteMysqlCluster(c *gin.Context) {
-	var (
-		appG = app.Gin{C: c}
-		code = e.MYSQL_DELETED
-	)
+	var appG = app.Gin{C: c}
 	id := utils.Str(c.Param("id")).Int()
 	mysqlCluster, state := models.GetMysqlcluster(id)
 
@@ -147,9 +142,6 @@ func DeleteMysqlCluster(c *gin.Context) {
 	sync.K8sDeleteMysqlCluster(&mysqlCluster)
 	models.DeleteMysqlCluster(id)
 
-	c.JSON(http.StatusOK, gin.H{
-		"code": code,
-		"msg":  e.GetMsg(code),
-		"data": nil,
-	})
+	appG.Response(http.StatusOK, e.MYSQL_DELETED, nil)
+
 }

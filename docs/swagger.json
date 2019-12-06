@@ -10,7 +10,7 @@
                 "produces": [
                     "application/json"
                 ],
-                "summary": "新增 mysql cluster 实例",
+                "summary": "add mysql cluster",
                 "parameters": [
                     {
                         "type": "string",
@@ -25,13 +25,140 @@
                         "name": "cluster_name",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "user",
+                        "name": "user",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "password",
+                        "name": "password",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "storage_type",
+                        "name": "storage_type",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "multi_master",
+                        "name": "multi_master",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "version",
+                        "name": "version",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "port",
+                        "name": "port",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.MysqlCluster"
+                            "$ref": "#/definitions/app.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/app.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/mysql/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get a single mysql cluster",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/app.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/app.Response"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Delete mysql cluster",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/app.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/app.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/mysqls": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get all mysql cluster",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/app.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/app.Response"
                         }
                     }
                 }
@@ -39,64 +166,16 @@
         }
     },
     "definitions": {
-        "models.MysqlCluster": {
+        "app.Response": {
             "type": "object",
-            "required": [
-                "cluster_name",
-                "namespace",
-                "password",
-                "storage_type"
-            ],
             "properties": {
-                "cluster_name": {
-                    "type": "string"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "deleted_at": {
-                    "type": "string"
-                },
-                "host": {
-                    "type": "string"
-                },
-                "id": {
+                "code": {
                     "type": "integer"
                 },
-                "member": {
-                    "type": "integer"
+                "data": {
+                    "type": "object"
                 },
-                "multi_master": {
-                    "type": "boolean"
-                },
-                "namespace": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                },
-                "port": {
-                    "type": "integer"
-                },
-                "status": {
-                    "type": "string"
-                },
-                "storage_type": {
-                    "type": "string"
-                },
-                "uid": {
-                    "type": "integer"
-                },
-                "updated_at": {
-                    "type": "string"
-                },
-                "user": {
-                    "type": "string"
-                },
-                "version": {
-                    "type": "string"
-                },
-                "volume_size": {
+                "msg": {
                     "type": "string"
                 }
             }

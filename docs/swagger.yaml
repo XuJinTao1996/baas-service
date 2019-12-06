@@ -1,45 +1,12 @@
 definitions:
-  models.MysqlCluster:
+  app.Response:
     properties:
-      cluster_name:
-        type: string
-      created_at:
-        type: string
-      deleted_at:
-        type: string
-      host:
-        type: string
-      id:
+      code:
         type: integer
-      member:
-        type: integer
-      multi_master:
-        type: boolean
-      namespace:
+      data:
+        type: object
+      msg:
         type: string
-      password:
-        type: string
-      port:
-        type: integer
-      status:
-        type: string
-      storage_type:
-        type: string
-      uid:
-        type: integer
-      updated_at:
-        type: string
-      user:
-        type: string
-      version:
-        type: string
-      volume_size:
-        type: string
-    required:
-    - cluster_name
-    - namespace
-    - password
-    - storage_type
     type: object
 info:
   contact: {}
@@ -58,12 +25,96 @@ paths:
         name: cluster_name
         required: true
         type: string
+      - description: user
+        in: query
+        name: user
+        type: string
+      - description: password
+        in: query
+        name: password
+        required: true
+        type: string
+      - description: storage_type
+        in: query
+        name: storage_type
+        required: true
+        type: string
+      - description: multi_master
+        in: query
+        name: multi_master
+        required: true
+        type: boolean
+      - description: version
+        in: query
+        name: version
+        type: string
+      - description: port
+        in: query
+        name: port
+        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.MysqlCluster'
-      summary: 新增 mysql cluster 实例
+            $ref: '#/definitions/app.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/app.Response'
+      summary: add mysql cluster
+  /api/v1/mysql/{id}:
+    delete:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/app.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/app.Response'
+      summary: Delete mysql cluster
+    get:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/app.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/app.Response'
+      summary: Get a single mysql cluster
+  /api/v1/mysqls:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/app.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/app.Response'
+      summary: Get all mysql cluster
 swagger: "2.0"
