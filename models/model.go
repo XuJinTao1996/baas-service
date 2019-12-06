@@ -38,7 +38,6 @@ type MysqlCluster struct {
 // 初始化创建数据表
 func init() {
 	var err error
-	CloseDB()
 	dbFile := setting.DBFile
 	dbType := setting.DBType
 	tablePrefix := setting.TablePrefix

@@ -86,6 +86,8 @@ func CreateMysqlCluster(c *gin.Context) {
 	err := c.ShouldBind(&mysqlCluster)
 	if err != nil {
 		log.Error(err)
+		appG.Response(http.StatusInternalServerError, e.INVALID_PARAMS, nil)
+		return
 	}
 
 	mysqlCluster.Host = mysqlCluster.RouterDeploymentName()
