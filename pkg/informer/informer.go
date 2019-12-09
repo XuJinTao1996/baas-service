@@ -2,9 +2,9 @@ package informer
 
 import (
 	"baas-service/models"
+	"baas-service/pkg/e"
 	"baas-service/pkg/k8s/client"
 	"fmt"
-	"github.com/google/martian/log"
 	mysqlv1alpha1 "github.com/oracle/mysql-operator/pkg/apis/mysql/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,6 +15,7 @@ import (
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
+	"log"
 	"time"
 )
 
@@ -41,7 +42,7 @@ func MysqlClusterInformer(clientSet client.BaseClientInterface) {
 
 func onAddMysql(obj interface{}) {
 	mysqlcluster := obj.(*mysqlv1alpha1.Cluster)
-	log.Infof("add a mysql cluster", mysqlcluster.Name)
+	log.Println("add a mysql cluster", mysqlcluster.Name)
 }
 
 func DeploymentInformer(clientSet *kubernetes.Clientset) {
@@ -66,12 +67,12 @@ func DeploymentInformer(clientSet *kubernetes.Clientset) {
 
 func onAddDeployment(obj interface{}) {
 	deployment := obj.(*appsv1.Deployment)
-	log.Infof("add a deployment", deployment.Name)
+	log.Println("add a deployment", deployment.Name)
 }
 
 func onUpdateDeployment(oldObj, newObj interface{}) {
 	deployment := newObj.(*appsv1.Deployment)
-	log.Infof("add a deployment", deployment.Name)
+	log.Println("add a deployment", deployment.Name)
 }
 
 // 更新 mysql cluster 的状态
@@ -80,20 +81,29 @@ func onUpdateMysqlCluster(oldObj, newObj interface{}) {
 	state := k8sMysqlCluster.Status.Conditions
 	if len(state) > 0 {
 
-		mysqlCluster, result := models.GetMysqlclusterByName(k8sMysqlCluster.Name)
-		if !result {
-			log.Errorf("mysql cluster does not exist!")
+		exists, err := models.ExistMysqlClusterByName(k8sMysqlCluster.Name)
+		if err != nil {
+			log.Println(e.GetMsg(e.ERROR_CHECK_MYSQL_EXIST_FAIL))
+		}
+
+		if !exists {
+			log.Println(e.MYSQL_DOES_NOT_EXIST)
+		}
+
+		mysqlCluster, err := models.GetMysqlclusterByName(k8sMysqlCluster.Name)
+		if err != nil {
+			log.Println(e.ERROR_GET_MYSQL_CLUSTER_FAIL)
 			return
 		}
 
 		if string(state[0].Type) == mysqlCluster.Status {
-			log.Infof("mysql cluster status has no changed!")
+			log.Println("mysql cluster status has no changed!")
 			return
 		}
 
 		newMysqlCluster, result := models.UpdateMysqlCluster(mysqlCluster, string(state[0].Type))
 		if !result {
-			log.Errorf("mysql cluster %v update failed", newMysqlCluster.ClusterName)
+			log.Println("mysql cluster %v update failed", newMysqlCluster.ClusterName)
 			return
 		}
 	}

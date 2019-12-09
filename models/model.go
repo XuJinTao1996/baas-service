@@ -21,18 +21,22 @@ type Model struct {
 // mysql cluster 模型
 type MysqlCluster struct {
 	Model
-	Namespace   string `form:"namespace,default=default" json:"namespace" binding:"required"`
-	ClusterName string `form:"cluster_name" json:"cluster_name" binding:"required"`
-	Member      int    `form:"member,default=1" json:"member"`
-	User        string `form:"db_user,default=root" json:"user"`
-	Password    string `form:"password" json:"password" binding:"required"`
-	Port        int    `form:"db_port,default=3306" json:"port"`
-	Host        string `form:"host" json:"host"`
-	MultiMaster bool   `form:"multi_master,default=false" json:"multi_master"`
-	Version     string `form:"version,default=8.0.12" json:"version"`
-	StorageType string `form:"storage_type" binding:"required" json:"storage_type"`
-	VolumeSize  string `form:"volume_size,default=1Gi" json:"volume_size"`
-	Status      string `form:"status,default=NotReady" json:"status"`
+	Namespace                   string `form:"namespace,default=default" json:"namespace" binding:"required"`
+	ClusterName                 string `form:"cluster_name" json:"cluster_name" binding:"required"`
+	Member                      int    `form:"member,default=1" json:"member"`
+	User                        string `form:"db_user,default=root" json:"user"`
+	Password                    string `form:"password" json:"password" binding:"required"`
+	Port                        int    `form:"db_port,default=3306" json:"port"`
+	Host                        string `form:"host" json:"host"`
+	MultiMaster                 bool   `form:"multi_master,default=false" json:"multi_master"`
+	Version                     string `form:"version,default=8.0.12" json:"version"`
+	StorageType                 string `form:"storage_type" binding:"required" json:"storage_type"`
+	VolumeSize                  string `form:"volume_size,default=1Gi" json:"volume_size"`
+	Status                      string `form:"status,default=NotReady" json:"status"`
+	DefaultAuthenticationPlugin string `form:"default_authentication_plugin,default=mysql_native_password" json:"status"`
+	CPU                         string `form:"cpu,default=1" json:"cpu"`
+	Memory                      string `form:"cpu,default=1Gi" json:"memory"`
+	MaxConnections              int    `form:"max_connections,default=10" json:"max_connections"`
 }
 
 // 初始化创建数据表

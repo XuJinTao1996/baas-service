@@ -1,14 +1,19 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
+	"baas-service/pkg/informer"
+	"baas-service/pkg/k8s/client"
 	"baas-service/pkg/setting"
 	"baas-service/routers"
+	"fmt"
+	"net/http"
 )
 
 func main() {
 	router := routers.InitRouter()
+
+	informer.DeploymentInformer(client.K8sClient)
+	informer.MysqlClusterInformer(client.MysqlClientset)
 
 	s := &http.Server{
 		Addr:           fmt.Sprintf(":%d", setting.HttpPort),
