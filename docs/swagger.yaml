@@ -25,32 +25,52 @@ paths:
         name: cluster_name
         required: true
         type: string
-      - description: user
+      - description: User
         in: query
         name: user
         type: string
-      - description: password
+      - description: Password
         in: query
         name: password
         required: true
         type: string
-      - description: storage_type
+      - description: StorageType
         in: query
         name: storage_type
         required: true
         type: string
-      - description: multi_master
+      - description: multiMaster
         in: query
         name: multi_master
         required: true
         type: boolean
-      - description: version
+      - description: Version
         in: query
         name: version
         type: string
       - description: port
         in: query
         name: port
+        type: integer
+      - description: VolumeSize
+        in: query
+        name: volume_size
+        type: string
+      - description: DefaultAuthenticationPlugin
+        in: query
+        name: default_authentication_plugin
+        type: string
+      - description: CPU
+        in: query
+        name: cpu
+        type: string
+      - description: Memory
+        in: query
+        name: memory
+        type: string
+      - description: MaxConnections
+        in: query
+        name: max_connections
         type: integer
       produces:
       - application/json

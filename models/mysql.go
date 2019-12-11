@@ -66,13 +66,15 @@ func DeleteMysqlCluster(id int) error {
 // 判断是否存在该 mysql 实例
 func ExistMysqlClusterByName(clusterName string) (bool, error) {
 	var mysql MysqlCluster
-	err := db.Select("id").Where("cluster_name = ?", clusterName).First(&mysql).Error
+	err := db.Select("cluster_name").Where("cluster_name = ?", clusterName).First(&mysql).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return false, nil
 	}
-	if mysql.ID > 0 {
+
+	if mysql.ClusterName != "" {
 		return true, nil
 	}
+
 	return false, nil
 }
 
@@ -86,6 +88,7 @@ func ExistMysqlClusterByID(id int) (bool, error) {
 	if mysql.ID > 0 {
 		return true, nil
 	}
+
 	return false, nil
 }
 

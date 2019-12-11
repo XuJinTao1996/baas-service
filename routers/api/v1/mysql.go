@@ -63,12 +63,17 @@ func ListMysqlCluster(c *gin.Context) {
 // @Produce json
 // @Param 	namespace query string true "Namespace"
 // @Param   cluster_name query string true "ClusterName"
-// @Param   user query string false "user"
-// @Param   password query string true "password"
-// @Param   storage_type query string true "storage_type"
-// @Param   multi_master query bool true "multi_master"
-// @Param   version query string false "version"
+// @Param   user query string false "User"
+// @Param   password query string true "Password"
+// @Param   storage_type query string true "StorageType"
+// @Param   multi_master query bool true "multiMaster"
+// @Param   version query string false "Version"
 // @Param   port query int false "port"
+// @Param   volume_size query string false "VolumeSize"
+// @Param   default_authentication_plugin query string false "DefaultAuthenticationPlugin"
+// @Param   cpu query string false "CPU"
+// @Param   memory query string false "Memory"
+// @Param   max_connections query int false "MaxConnections"
 // @Success 200 {object} app.Response
 // @Failure 500 {object} app.Response
 // @Router /api/v1/mysql [post]
@@ -98,7 +103,7 @@ func CreateMysqlCluster(c *gin.Context) {
 		appG.Response(http.StatusInternalServerError, e.ERROR_CHECK_MYSQL_EXIST_FAIL, nil)
 	}
 
-	if !exists {
+	if exists {
 		appG.Response(http.StatusInternalServerError, e.ERROR_EXIST_MYSQL, nil)
 		return
 	}
@@ -109,8 +114,8 @@ func CreateMysqlCluster(c *gin.Context) {
 		return
 	}
 
-	err = models.AddMysqlCluster(&mysqlCluster)
 	mysqlCluster.SetPassword()
+	err = models.AddMysqlCluster(&mysqlCluster)
 	if err != nil {
 		appG.Response(http.StatusInternalServerError, e.ERROR_CREATE_MYSQL, nil)
 		return
@@ -148,13 +153,9 @@ func DeleteMysqlCluster(c *gin.Context) {
 
 	if !exists {
 		appG.Response(http.StatusInternalServerError, e.MYSQL_DOES_NOT_EXIST, nil)
-	}
-	mysqlCluster, err = models.GetMysqlcluster(id)
-
-	if !exists {
-		appG.Response(http.StatusInternalServerError, e.MYSQL_DOES_NOT_EXIST, nil)
 		return
 	}
+	mysqlCluster, _ = models.GetMysqlcluster(id)
 
 	code, err = sync.K8sDeleteMysqlCluster(mysqlCluster)
 	if err != nil {

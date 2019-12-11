@@ -110,9 +110,9 @@ func K8sCreateMysqlCluster(mysql *models.MysqlCluster) (int, error) {
 }
 
 // 创建 mysql 密码
-func createMysqlPasswordSecret(ns, name, passwd string) error {
+func createMysqlPasswordSecret(ns, name, password string) error {
 	stringData := make(map[string]string)
-	stringData["password"] = passwd
+	stringData["password"] = password
 	passwordSecret := corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,

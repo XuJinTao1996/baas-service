@@ -9,6 +9,6 @@ type ConfigGenerateInterface interface {
 func (cluster *MysqlCluster) GenerateConfig() map[string]string {
 	configs := make(map[string]string)
 	configs["default_authentication_plugin"] = cluster.DefaultAuthenticationPlugin
-	configs["Max_Connections"] = utils.Int(cluster.MaxConnections).Str()
+	configs["max_connections"] = utils.Int(cluster.MaxConnections).Str()
 	return configs
 }

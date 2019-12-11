@@ -28,34 +28,34 @@
                     },
                     {
                         "type": "string",
-                        "description": "user",
+                        "description": "User",
                         "name": "user",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "password",
+                        "description": "Password",
                         "name": "password",
                         "in": "query",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "storage_type",
+                        "description": "StorageType",
                         "name": "storage_type",
                         "in": "query",
                         "required": true
                     },
                     {
                         "type": "boolean",
-                        "description": "multi_master",
+                        "description": "multiMaster",
                         "name": "multi_master",
                         "in": "query",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "version",
+                        "description": "Version",
                         "name": "version",
                         "in": "query"
                     },
@@ -63,6 +63,36 @@
                         "type": "integer",
                         "description": "port",
                         "name": "port",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "VolumeSize",
+                        "name": "volume_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "DefaultAuthenticationPlugin",
+                        "name": "default_authentication_plugin",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "CPU",
+                        "name": "cpu",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Memory",
+                        "name": "memory",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "MaxConnections",
+                        "name": "max_connections",
                         "in": "query"
                     }
                 ],

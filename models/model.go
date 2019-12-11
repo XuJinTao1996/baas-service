@@ -32,11 +32,11 @@ type MysqlCluster struct {
 	Version                     string `form:"version,default=8.0.12" json:"version"`
 	StorageType                 string `form:"storage_type" binding:"required" json:"storage_type"`
 	VolumeSize                  string `form:"volume_size,default=1Gi" json:"volume_size"`
-	Status                      string `form:"status,default=NotReady" json:"status"`
-	DefaultAuthenticationPlugin string `form:"default_authentication_plugin,default=mysql_native_password" json:"status"`
-	CPU                         string `form:"cpu,default=1" json:"cpu"`
-	Memory                      string `form:"cpu,default=1Gi" json:"memory"`
+	DefaultAuthenticationPlugin string `form:"default_authentication_plugin,default=mysql_native_password" json:"default_authentication_plugin"`
+	CPU                         string `form:"cpu,default=1000m" json:"cpu"`
+	Memory                      string `form:"memory,default=1Gi" json:"memory"`
 	MaxConnections              int    `form:"max_connections,default=10" json:"max_connections"`
+	Status                      string `form:"status,default=NotReady" json:"status"`
 }
 
 // 初始化创建数据表
