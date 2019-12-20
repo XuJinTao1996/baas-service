@@ -8,6 +8,10 @@
 - kubernetes 1.11 +
 - Go 1.13.3
 
+## Architecture
+
+![avatar](images/architecture.jpeg)
+
 ## mysql operator deployment ([mysql-operator](https://github.com/oracle/mysql-operator))
 
 - 部署架构图
