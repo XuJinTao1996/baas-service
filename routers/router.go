@@ -27,7 +27,7 @@ func InitRouter() *gin.Engine {
 		apiv1.GET("/mysqls", v1.ListMysqlCluster)
 		apiv1.GET("/mysql/:id", v1.GetMysqlCluster)
 		apiv1.POST("/mysql", v1.CreateMysqlCluster)
-		apiv1.PUT("/mysql/:id", v1.UpdateMysqlCluster)
+		//apiv1.PUT("/mysql/:id", v1.UpdateMysqlCluster)
 		apiv1.DELETE("/mysql/:id", v1.DeleteMysqlCluster)
 
 		apiv1.GET("/kafkas", v1.ListKafkaCluster)
