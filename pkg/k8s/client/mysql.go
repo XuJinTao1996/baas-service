@@ -8,7 +8,7 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-type ClusterInterface interface {
+type MysqlClusterInterface interface {
 	List(opts metav1.ListOptions) (*mysqlv1alpha1.ClusterList, error)
 	Create(cluster *mysqlv1alpha1.Cluster) (*mysqlv1alpha1.Cluster, error)
 	Watch(opts metav1.ListOptions) (watch.Interface, error)

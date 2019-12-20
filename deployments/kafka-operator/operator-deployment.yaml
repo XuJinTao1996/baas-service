@@ -1,0 +1,103 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: operator
+    app.kubernetes.io/instance: kafka-operator
+    app.kubernetes.io/name: kafka-operator
+    app.kubernetes.io/version: 0.8.1
+    control-plane: controller-manager
+    controller-tools.k8s.io: '1.0'
+  name: kafka-operator-operator
+  namespace: kafka-operator
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: operator
+      app.kubernetes.io/instance: kafka-operator
+      app.kubernetes.io/name: kafka-operator
+      control-plane: controller-manager
+      controller-tools.k8s.io: '1.0'
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: prometheus
+        app.kubernetes.io/component: operator
+        app.kubernetes.io/instance: kafka-operator
+        app.kubernetes.io/name: kafka-operator
+        component: alertmanager
+        control-plane: controller-manager
+        controller-tools.k8s.io: '1.0'
+    spec:
+      containers:
+        - args:
+            - '--secure-listen-address=0.0.0.0:8443'
+            - '--upstream=http://127.0.0.1:8080/'
+            - '--logtostderr=true'
+            - '--v=10'
+          image: 'gcr.io/kubebuilder/kube-rbac-proxy:v0.4.0'
+          imagePullPolicy: IfNotPresent
+          name: kube-rbac-proxy
+          ports:
+            - containerPort: 8443
+              name: https
+              protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        - args:
+            - '--enable-leader-election'
+            - '--cert-manager-namespace=cert-manager'
+          command:
+            - /manager
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.namespace
+          image: 'banzaicloud/kafka-operator:0.8.1'
+          imagePullPolicy: IfNotPresent
+          name: manager
+          ports:
+            - containerPort: 443
+              name: webhook-server
+              protocol: TCP
+            - containerPort: 8080
+              name: metrics
+              protocol: TCP
+            - containerPort: 9001
+              name: alerts
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 200m
+              memory: 256Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /etc/webhook/certs
+              name: serving-cert
+              readOnly: true
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      serviceAccount: kafka-operator-operator
+      serviceAccountName: kafka-operator-operator
+      volumes:
+        - name: serving-cert
+          secret:
+            defaultMode: 420
+            secretName: kafka-operator-serving-cert

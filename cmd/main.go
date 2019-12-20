@@ -14,6 +14,8 @@ func main() {
 
 	informer.DeploymentInformer(client.K8sClient)
 	informer.MysqlClusterInformer(client.MysqlClientset)
+	informer.ZookeeperClusterInformer(client.ZookeeperClientset)
+	informer.KafkaClusterInformer(client.KafkaClient)
 
 	s := &http.Server{
 		Addr:           fmt.Sprintf(":%d", setting.HttpPort),

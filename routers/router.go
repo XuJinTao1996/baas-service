@@ -24,18 +24,26 @@ func InitRouter() *gin.Engine {
 
 	apiv1 := r.Group("/api/v1")
 	{
-
-		// 获取 mysql 实例列表
 		apiv1.GET("/mysqls", v1.ListMysqlCluster)
-		// 获取指定 mysql 实例
 		apiv1.GET("/mysql/:id", v1.GetMysqlCluster)
-		// 新建 mysql 实例
 		apiv1.POST("/mysql", v1.CreateMysqlCluster)
-		// 更新指定 mysql 实例
 		apiv1.PUT("/mysql/:id", v1.UpdateMysqlCluster)
-		// 删除指定 mysql 实例
 		apiv1.DELETE("/mysql/:id", v1.DeleteMysqlCluster)
 
+		apiv1.GET("/kafkas", v1.ListKafkaCluster)
+		apiv1.POST("/kafka", v1.CreateKafkaCluster)
+		apiv1.GET("/kafka/:id", v1.GetKafkaCluster)
+		apiv1.DELETE("/kafka/:id", v1.DeleteKafkaCluster)
+
+		apiv1.POST("/zookeeper", v1.CreateZookeeperCluster)
+		apiv1.GET("/zookeeper/:id", v1.GetZookeeperCluster)
+		apiv1.GET("/zookeepers", v1.ListZookeeperCluster)
+		apiv1.DELETE("/zookeeper/:id", v1.DeleteZookeeperCluster)
+
+		apiv1.POST("/kafka_topic", v1.CreateKafkaTopic)
+		apiv1.GET("/kafka_topic/:id", v1.GetKafkaTopic)
+		apiv1.GET("/kafka_topics", v1.ListKafkaTopic)
+		apiv1.DELETE("/kafka_topic/:id", v1.DeleteKafkaTopic)
 	}
 
 	return r

@@ -22,9 +22,9 @@ var (
 // 初始化配置
 func init() {
 	var err error
-	Cfg, err = ini.Load("/etc/app.ini")
+	Cfg, err = ini.Load("conf/app.ini")
 	if err != nil {
-		log.Fatalf("Failed to parse '/etc/app.ini': %v", err)
+		log.Fatalf("Failed to parse 'conf/app.ini': %v", err)
 	}
 
 	LoadBase()

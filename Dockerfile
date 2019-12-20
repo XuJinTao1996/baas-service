@@ -1,7 +1,10 @@
 From debian
 
-COPY ./app /home
-COPY ./conf/app.ini /etc/app.ini
-COPY ./db/baas.db /home/baas.db
+COPY ./conf /home/conf
+COPY ./assets /home/assets
+COPY ./db /home/db
+COPY ./app /home/app
+
+WORKDIR /home
 
 ENTRYPOINT /home/app

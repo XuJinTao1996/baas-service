@@ -1,0 +1,57 @@
+apiVersion: v1
+imagePullSecrets: []
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/component: authproxy
+    app.kubernetes.io/instance: kafka-operator
+    app.kubernetes.io/name: kafka-operator
+    app.kubernetes.io/version: 0.8.1
+    helm.sh/chart: kafka-operator-0.2.10
+  name: kafka-operator-authproxy
+  namespace: kafka-operator
+---
+apiVersion: authorization.openshift.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/component: authproxy
+    app.kubernetes.io/instance: kafka-operator
+    app.kubernetes.io/name: kafka-operator
+    app.kubernetes.io/version: 0.8.1
+    helm.sh/chart: kafka-operator-0.2.10
+  name: kafka-operator-authproxy
+rules:
+  - apiGroups:
+      - authentication.k8s.io
+    attributeRestrictions: null
+    resources:
+      - tokenreviews
+    verbs:
+      - create
+  - apiGroups:
+      - authorization.k8s.io
+    attributeRestrictions: null
+    resources:
+      - subjectaccessreviews
+    verbs:
+      - create
+---
+apiVersion: authorization.openshift.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/component: authproxy
+    app.kubernetes.io/instance: kafka-operator
+    app.kubernetes.io/name: kafka-operator
+    app.kubernetes.io/version: 0.8.1
+    helm.sh/chart: kafka-operator-0.2.10
+  name: kafka-operator-authproxy
+roleRef:
+  name: kafka-operator-authproxy
+subjects:
+  - kind: ServiceAccount
+    name: kafka-operator-authproxy
+    namespace: kafka-operator
+userNames:
+  - system:serviceaccount:kafka-operator:kafka-operator-authproxy

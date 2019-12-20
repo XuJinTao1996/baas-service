@@ -1,0 +1,24 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: kafka-operator-operator
+  namespace: kafka-operator
+  labels:
+    app.kubernetes.io/component: operator
+    app.kubernetes.io/instance: kafka-operator
+    app.kubernetes.io/name: kafka-operator
+    app.kubernetes.io/version: 0.8.1
+    control-plane: controller-manager
+    controller-tools.k8s.io: '1.0'
+spec:
+  ports:
+    - name: https
+      protocol: TCP
+      port: 443
+      targetPort: 443
+  selector:
+    app.kubernetes.io/component: operator
+    app.kubernetes.io/instance: kafka-operator
+    app.kubernetes.io/name: kafka-operator
+    control-plane: controller-manager
+    controller-tools.k8s.io: '1.0'

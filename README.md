@@ -8,7 +8,7 @@
 - kubernetes 1.11 +
 - Go 1.13.3
 
-## mysql operator deployment
+## mysql operator deployment ([mysql-operator](https://github.com/oracle/mysql-operator))
 
 - 部署架构图
 
@@ -21,6 +21,25 @@
 2. 部署 mysql operator
 
         oc create -f ./deployments/mysql-operator
+
+## kafka operator deployment（[kafka-operator](https://github.com/banzaicloud/kafka-operator)）
+
+- 架构图
+
+![avatar](images/kafka.jpg)
+
+- 具体部署步骤如下
+	1. cert-manager 部署
+
+			oc create -f ./deployments/cert-manager-openshift.yaml
+	1. zookeeper-operator 部署
+
+			oc new-project zookeeper-operator
+			oc create -f ./deployments/zookeeper-operator
+	1. kafka-operator 部署
+
+			oc new-project kafka-operator
+			oc create -f ./deployments/kafka-operator
 
 ## build management image
 
@@ -36,5 +55,5 @@
 
 ## deploy management
 
-        oc adm policy add-cluster-role-to-user cluster-admin -z default -n mysql-operator
-        oc create -f ./deployments/dbaas.yaml
+	oc adm policy add-cluster-role-to-user cluster-admin -z default -n default
+	oc create -f ./deployments/dbaas.yaml

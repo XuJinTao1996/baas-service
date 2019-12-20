@@ -87,7 +87,7 @@ func K8sCreateMysqlCluster(mysql *models.MysqlCluster) (int, error) {
 		},
 	}
 
-	_, err = client.MysqlClientset.Clusters(mysql.Namespace).Create(&newCluster)
+	_, err = client.MysqlClientset.MysqlClusters(mysql.Namespace).Create(&newCluster)
 	if err != nil {
 		code = e.K8S_MYSQL_CLUSTER_CREATE_FAILED
 		return code, err
@@ -231,7 +231,7 @@ func createMysqlRouterService(ns, name, appName string, port int) error {
 func K8sDeleteMysqlCluster(mysql *models.MysqlCluster) (int, error) {
 	var err error
 	var code int
-	err = client.MysqlClientset.Clusters(mysql.Namespace).Delete(mysql.ClusterName, metav1.ListOptions{})
+	err = client.MysqlClientset.MysqlClusters(mysql.Namespace).Delete(mysql.ClusterName, metav1.ListOptions{})
 	if err != nil {
 		code = e.K8S_MYSQL_CLUSTER_DELETE_FAILED
 		return code, err

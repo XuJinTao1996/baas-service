@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zookeeper-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: zookeeper-operator
+  template:
+    metadata:
+      labels:
+        name: zookeeper-operator
+        component: zookeeper-operator
+    spec:
+      serviceAccountName: zookeeper-operator
+      containers:
+      - name: zookeeper-operator
+        image: pravega/zookeeper-operator:0.2.2
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 6000
+          name: metrics
+        command:
+        - zookeeper-operator
+        env:
+        - name: WATCH_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: OPERATOR_NAME
+          value: zookeeper-operator
